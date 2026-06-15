@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestão de Tarefas — Norte Tech</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    /* ============================================================
+       NORTE TECH — DESIGN SYSTEM (idêntico ao KPI Dashboard)
+    ============================================================ */
+    :root {
+      --nt-navy:       #0a1628;
+      --nt-navy-mid:   #112040;
+      --nt-navy-card:  #162a50;
+      --nt-blue:       #1a56db;
+      --nt-blue-light: #3b82f6;
+      --nt-orange:     #E4C62A;
+      --nt-orange-dim: #ea580c;
+      --nt-teal:       #14b8a6;
+      --nt-green:      #22c55e;
+      --nt-red:        #ef4444;
+      --nt-yellow:     #eab308;
+      --nt-purple:     #a855f7;
+      --nt-white:      #f0f6ff;
+      --nt-muted:      #8da5c6;
+      --nt-border:     rgba(59,130,246,0.18);
+      --nt-glow:       rgba(26,86,219,0.25);
+      --nt-radius:     10px;
+      --nt-radius-lg:  16px;
+      --font-main:     'Sora', sans-serif;
+      --font-mono:     'JetBrains Mono', monospace;
+    }
+    /* ---- LIGHT THEME ---- */
+    body.light-theme {
+      --nt-navy:       #f0f4fb;
+      --nt-navy-mid:   #ffffff;
+      --nt-navy-card:  #ffffff;
+      --nt-blue:       #1a56db;
+      --nt-blue-light: #2563eb;
+      --nt-orange:     #b89000;
+      --nt-orange-dim: #c2410c;
+      --nt-teal:       #0f766e;
+      --nt-green:      #15803d;
+      --nt-red:        #dc2626;
+      --nt-yellow:     #ca8a04;
+      --nt-purple:     #7c3aed;
+      --nt-white:      #0f172a;
+      --nt-muted:      #64748b;
+      --nt-border:     rgba(26,86,219,0.14);
+      --nt-glow:       rgba(26,86,219,0.10);
+    }
+    body.light-theme header,
+    body.light-theme .sidebar { box-shadow: 0 1px 0 var(--nt-border); }
+    body.light-theme .sc,
+    body.light-theme .table-wrap,
+    body.light-theme .filter-bar,
+    body.light-theme .resp-card,
+    body.light-theme .cat-card,
+    body.light-theme .modal-box { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+    body.light-theme thead th  { background: rgba(26,86,219,0.04); }
+    body.light-theme tbody tr  { border-bottom-color: rgba(0,0,0,0.06); }
+    body.light-theme tbody tr:hover { background: rgba(26,86,219,0.05); }
+    body.light-theme tbody tr.vencida { background: rgba(220,38,38,0.04); }
+    body.light-theme tbody tr.vencida:hover { background: rgba(220,38,38,0.08); }
+    body.light-theme .form-control,
+    body.light-theme .filter-select,
+    body.light-theme .filter-input { background: #f1f5f9; color: #0f172a; border-color: rgba(26,86,219,0.22); }
+    body.light-theme .filter-select option { background: #f1f5f9; color: #0f172a; }
+    body.light-theme .loader-bar-wrap { background: rgba(0,0,0,0.08); }
+    body.light-theme .rc-stat,
+    body.light-theme .cn { background: rgba(0,0,0,0.04); }
+    body.light-theme .progress-bar-bg,
+    body.light-theme .rc-bar-wrap,
+    body.light-theme .cp-bar-wrap { background: rgba(0,0,0,0.08); }
+    body.light-theme #toast { background:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.15); }
+    body.light-theme .sidebar-item:hover { background:rgba(26,86,219,0.07); }
+    body.light-theme .sidebar-item.active { background:rgba(26,86,219,0.10); }
+    body.light-theme .btn-icon { border-color:rgba(26,86,219,0.15); color:#64748b; }
+    body.light-theme .header-btn { border-color:rgba(26,86,219,0.18); color:#64748b; }
+    body.light-theme .header-date { background:rgba(26,86,219,0.08); }
+    /* transition suave ao trocar tema */
+    body { transition: background .35s, color .35s; }
+    header, .sidebar, .sc, .table-wrap, .filter-bar, .resp-card, .cat-card, .modal-box, .form-control, .filter-select, .filter-input, #toast { transition: background .35s, border-color .35s, box-shadow .35s, color .35s; }
+
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      font-family: var(--font-main);
+      background: var(--nt-navy);
+      color: var(--nt-white);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ---- LOADING SCREEN ---- */
+    #loading-screen {
+      position: fixed; inset: 0;
+      background: var(--nt-navy);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.6s;
+    }
+    #loading-screen.fade-out { opacity:0; pointer-events:none; }
+    .loader-logo-img { height: 52px; margin-bottom: 10px; object-fit:contain; filter:brightness(1.1); }
+    .loader-sub  { color:var(--nt-muted); font-size:.85rem; margin-bottom:32px; letter-spacing:.02em; }
+    .loader-bar-wrap { width:240px; height:3px; background:rgba(255,255,255,.1); border-radius:99px; overflow:hidden; }
+    .loader-bar  { height:100%; width:0%; background:linear-gradient(90deg,var(--nt-blue),var(--nt-orange)); border-radius:99px; animation:loaderFill 1.8s ease-in-out forwards; }
+    @keyframes loaderFill { to { width:100%; } }
+    .loader-dots { display:flex; gap:6px; margin-top:18px; }
+    .loader-dots span { width:6px; height:6px; border-radius:50%; background:var(--nt-blue-light); animation:dotBounce 1.2s ease-in-out infinite; }
+    .loader-dots span:nth-child(2) { animation-delay:.2s; }
+    .loader-dots span:nth-child(3) { animation-delay:.4s; }
+    @keyframes dotBounce { 0%,80%,100%{ transform:scale(.8); opacity:.4; } 40%{ transform:scale(1.2); opacity:1; } }
+
+    /* ---- HEADER ---- */
+    header {
+      background: var(--nt-navy-mid);
+      border-bottom: 1px solid var(--nt-border);
+      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 62px; position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(8px);
+    }
+    .header-brand { display:flex; align-items:center; gap:14px; }
+    .header-brand img { height:34px; object-fit:contain; }
+    .brand-divider { width:1px; height:28px; background:var(--nt-border); }
+    .brand-text  { font-size:1rem; font-weight:700; }
+    .brand-text span { color:var(--nt-orange); }
+    .brand-sub   { font-size:.68rem; color:var(--nt-muted); margin-top:-1px; }
+    .header-right { display:flex; align-items:center; gap:10px; }
+    .header-date {
+      background: rgba(26,86,219,.2); border:1px solid var(--nt-border);
+      color:var(--nt-blue-light); font-size:.72rem; font-weight:600;
+      padding:5px 12px; border-radius:6px; font-family:var(--font-mono);
+    }
+    .header-btn {
+      background:none; border:1px solid var(--nt-border); color:var(--nt-muted);
+      border-radius:7px; padding:6px 14px; cursor:pointer; font-size:.76rem;
+      font-family:var(--font-main); font-weight:500;
+      display:flex; align-items:center; gap:6px; transition:all .2s;
+    }
+    .header-btn:hover { background:rgba(26,86,219,.15); color:var(--nt-white); border-color:var(--nt-blue-light); }
+    .header-btn.primary { background:var(--nt-blue); color:#fff !important; border-color:var(--nt-blue); }
+    .header-btn.primary:hover { background:#1e40af; color:#fff !important; }
+
+    /* ---- LAYOUT ---- */
+    .layout { display:flex; min-height:calc(100vh - 62px); }
+
+    /* ---- SIDEBAR ---- */
+    .sidebar {
+      width:214px; min-width:214px;
+      background:var(--nt-navy-mid); border-right:1px solid var(--nt-border);
+      padding:18px 0; display:flex; flex-direction:column;
+    }
+    .sidebar-section-title {
+      font-size:.62rem; font-weight:700; color:var(--nt-muted);
+      letter-spacing:.12em; text-transform:uppercase;
+      padding:0 16px; margin:14px 0 5px;
+    }
+    .sidebar-item {
+      display:flex; align-items:center; gap:10px;
+      padding:9px 16px; cursor:pointer; font-size:.8rem; font-weight:500;
+      color:var(--nt-muted); border-left:3px solid transparent;
+      transition:all .18s; user-select:none;
+    }
+    .sidebar-item:hover { background:rgba(26,86,219,.12); color:var(--nt-white); }
+    .sidebar-item.active { background:rgba(26,86,219,.18); color:var(--nt-white); border-left-color:var(--nt-orange); }
+    .sidebar-icon { font-size:.95rem; width:18px; text-align:center; }
+    .sidebar-badge {
+      margin-left:auto; background:rgba(239,68,68,.25); color:var(--nt-red);
+      font-size:.62rem; font-weight:700; padding:1px 7px; border-radius:99px; font-family:var(--font-mono);
+    }
+    .sidebar-badge.orange { background:rgba(228,198,42,.2); color:var(--nt-orange); }
+    .sidebar-badge.blue   { background:rgba(26,86,219,.2);  color:var(--nt-blue-light); }
+    .sidebar-divider { height:1px; background:var(--nt-border); margin:10px 16px; }
+
+    /* ---- MAIN ---- */
+    .main { flex:1; overflow-y:auto; padding:22px 26px; }
+    .view { display:none; }
+    .view.active { display:block; animation:fadeUp .3s ease; }
+    @keyframes fadeUp { from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+
+    /* ---- PAGE TITLE ---- */
+    .page-title-row { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:20px; }
+    .page-title     { font-size:1.5rem; font-weight:800; letter-spacing:-.03em; line-height:1; }
+    .page-title span{ color:var(--nt-orange); }
+    .page-sub       { font-size:.78rem; color:var(--nt-muted); margin-top:4px; }
+
+    /* ---- SUMMARY CARDS ---- */
+    .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:22px; }
+    .sc {
+      background:var(--nt-navy-card); border:1px solid var(--nt-border);
+      border-radius:var(--nt-radius-lg); padding:16px 18px;
+      position:relative; overflow:hidden; transition:transform .2s, box-shadow .2s;
+    }
+    .sc:hover { transform:translateY(-2px); box-shadow:0 8px 32px var(--nt-glow); }
+    .sc::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--acc,var(--nt-blue)),transparent); }
+    .sc.acc-orange { --acc:var(--nt-orange); }
+    .sc.acc-green  { --acc:var(--nt-green);  }
+    .sc.acc-red    { --acc:var(--nt-red);    }
+    .sc.acc-yellow { --acc:var(--nt-yellow); }
+    .sc.acc-teal   { --acc:var(--nt-teal);   }
+    .sc.acc-purple { --acc:var(--nt-purple); }
+    .sc-label { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--nt-muted); margin-bottom:8px; }
+    .sc-value { font-size:1.9rem; font-weight:800; letter-spacing:-.04em; line-height:1; font-family:var(--font-mono); }
+    .sc-meta  { font-size:.68rem; color:var(--nt-muted); margin-top:5px; }
+    .sc-icon  { position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:1.8rem; opacity:.1; }
+
+    /* ---- FILTER BAR ---- */
+    .filter-bar {
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:18px;
+      background:var(--nt-navy-card); border:1px solid var(--nt-border);
+      border-radius:var(--nt-radius); padding:12px 16px;
+    }
+    .filter-label { font-size:.72rem; color:var(--nt-muted); font-weight:600; white-space:nowrap; }
+    .filter-select, .filter-input {
+      background:#0e1e3a; border:1px solid var(--nt-border);
+      color:#e8f0fe; font-family:var(--font-main); font-size:.78rem;
+      padding:6px 12px; border-radius:7px; cursor:pointer; outline:none;
+      transition:border-color .2s, background .35s, color .35s;
+    }
+    .filter-select option { background:#0e1e3a; color:#e8f0fe; }
+    .filter-select:focus, .filter-input:focus { border-color:var(--nt-blue-light); }
+    .filter-input { min-width:200px; }
+    .filter-clear { background:none; border:1px solid var(--nt-border); color:var(--nt-muted); border-radius:7px; padding:6px 12px; cursor:pointer; font-size:.72rem; transition:all .2s; }
+    .filter-clear:hover { color:var(--nt-white); border-color:var(--nt-red); }
+
+    /* ---- TABLE ---- */
+    .table-wrap { background:var(--nt-navy-card); border:1px solid var(--nt-border); border-radius:var(--nt-radius-lg); overflow:hidden; }
+    .table-header-bar {
+      padding:13px 18px; display:flex; align-items:center; justify-content:space-between;
+      border-bottom:1px solid var(--nt-border);
+    }
+    .table-title { font-size:.83rem; font-weight:700; }
+    .table-count { font-size:.7rem; color:var(--nt-muted); font-family:var(--font-mono); }
+    table { width:100%; border-collapse:collapse; }
+    thead th {
+      background:rgba(255,255,255,.03); font-size:.62rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.1em; color:var(--nt-muted);
+      padding:10px 12px; text-align:left; border-bottom:1px solid var(--nt-border); white-space:nowrap;
+      cursor:pointer; user-select:none; transition:color .15s;
+    }
+    thead th:hover { color:var(--nt-white); }
+    thead th .sort-icon { margin-left:4px; opacity:.5; }
+    tbody tr { border-bottom:1px solid rgba(255,255,255,.04); transition:background .15s; }
+    tbody tr:last-child { border-bottom:none; }
+    tbody tr:hover { background:rgba(26,86,219,.07); }
+    tbody tr.vencida { background:rgba(239,68,68,.05); }
+    tbody tr.vencida:hover { background:rgba(239,68,68,.1); }
+    tbody td { padding:10px 12px; font-size:.77rem; color:var(--nt-white); vertical-align:middle; }
+    td.muted  { color:var(--nt-muted); font-size:.7rem; }
+    td.mono   { font-family:var(--font-mono); font-size:.75rem; }
+    .empty-row td { text-align:center; padding:40px; color:var(--nt-muted); font-size:.85rem; }
+
+    /* ---- BADGES ---- */
+    .badge {
+      display:inline-flex; align-items:center; gap:4px;
+      font-size:.62rem; font-weight:700; padding:3px 8px;
+      border-radius:99px; white-space:nowrap; font-family:var(--font-mono);
+    }
+    .badge-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
+    .b-alta    { background:rgba(239,68,68,.15);  color:var(--nt-red);    }
+    .b-media   { background:rgba(234,179,8,.15);  color:var(--nt-yellow); }
+    .b-baixa   { background:rgba(34,197,94,.15);  color:var(--nt-green);  }
+    .b-pendente   { background:rgba(59,130,246,.15); color:var(--nt-blue-light); }
+    .b-andamento  { background:rgba(228,198,42,.15); color:var(--nt-orange);     }
+    .b-concluida  { background:rgba(34,197,94,.15);  color:var(--nt-green);      }
+    .b-cancelada  { background:rgba(255,255,255,.07);color:var(--nt-muted);      }
+    .b-vencida    { background:rgba(239,68,68,.2);   color:var(--nt-red); animation:pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:.6; } }
+
+    .cat-badge {
+      display:inline-block; font-size:.6rem; font-weight:600; padding:2px 8px;
+      border-radius:5px; font-family:var(--font-mono); white-space:nowrap;
+    }
+    .cat-oficina      { background:rgba(168,85,247,.15); color:#c084fc; }
+    .cat-frota        { background:rgba(20,184,166,.15);  color:var(--nt-teal);       }
+    .cat-compras      { background:rgba(228,198,42,.15);  color:var(--nt-orange);     }
+    .cat-armazem      { background:rgba(59,130,246,.15);  color:var(--nt-blue-light); }
+    .cat-dashboards   { background:rgba(34,197,94,.15);   color:var(--nt-green);      }
+    .cat-administrativo { background:rgba(239,68,68,.15); color:var(--nt-red);        }
+    .cat-instalacao { background:rgba(168,85,247,.15); color:#c084fc; }
+    .cat-logistica { background:rgba(168,85,247,.15); color:#c084fc; }
+
+
+    /* ---- DIAS RESTANTES ---- */
+    .dias-chip {
+      display:inline-flex; align-items:center; gap:4px;
+      font-size:.68rem; font-weight:600; padding:3px 8px;
+      border-radius:6px; font-family:var(--font-mono);
+    }
+    .dias-ok      { background:rgba(34,197,94,.1);  color:var(--nt-green);      }
+    .dias-proximo { background:rgba(234,179,8,.1);  color:var(--nt-yellow);     }
+    .dias-hoje    { background:rgba(234,179,8,.2);  color:var(--nt-yellow); font-weight:800; }
+    .dias-vencido { background:rgba(239,68,68,.15); color:var(--nt-red); animation:pulse 1.5s infinite; }
+    .dias-sem     { background:rgba(255,255,255,.05); color:var(--nt-muted); }
+
+    /* ---- ACTION BUTTONS ---- */
+    .action-btns { display:flex; gap:5px; }
+    .btn-icon {
+      background:none; border:1px solid var(--nt-border); color:var(--nt-muted);
+      border-radius:6px; padding:4px 8px; cursor:pointer; font-size:.78rem;
+      transition:all .18s;
+    }
+    .btn-icon:hover { background:rgba(26,86,219,.15); color:var(--nt-white); border-color:var(--nt-blue-light); }
+    .btn-icon.danger:hover { background:rgba(239,68,68,.15); color:var(--nt-red); border-color:var(--nt-red); }
+    .btn-icon.success:hover { background:rgba(34,197,94,.15); color:var(--nt-green); border-color:var(--nt-green); }
+
+    /* ---- MODAL ---- */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.65);
+      display:none; align-items:center; justify-content:center; z-index:1000;
+      backdrop-filter:blur(4px);
+    }
+    .modal-overlay.open { display:flex; }
+    .modal-box {
+      background:var(--nt-navy-mid); border:1px solid var(--nt-border);
+      border-radius:var(--nt-radius-lg); width:min(640px,95vw); max-height:92vh;
+      overflow-y:auto; padding:28px; position:relative;
+      animation:modalIn .25s ease;
+    }
+    @keyframes modalIn { from{ opacity:0; transform:scale(.95) translateY(12px); } to{ opacity:1; transform:none; } }
+    .modal-close {
+      position:absolute; top:14px; right:16px; background:none; border:none;
+      color:var(--nt-muted); cursor:pointer; font-size:1rem; padding:4px 8px;
+      border-radius:6px; transition:all .15s;
+    }
+    .modal-close:hover { background:rgba(239,68,68,.1); color:var(--nt-red); }
+    .modal-title { font-size:1.1rem; font-weight:800; margin-bottom:4px; }
+    .modal-sub   { font-size:.75rem; color:var(--nt-muted); margin-bottom:22px; }
+
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .form-grid.full { grid-template-columns:1fr; }
+    .form-group { display:flex; flex-direction:column; gap:5px; }
+    .form-group.span2 { grid-column:span 2; }
+    .form-label { font-size:.7rem; font-weight:600; color:var(--nt-muted); text-transform:uppercase; letter-spacing:.08em; }
+    .form-control {
+      background:rgba(255,255,255,.04); border:1px solid var(--nt-border);
+      color:var(--nt-white); font-family:var(--font-main); font-size:.82rem;
+      padding:9px 12px; border-radius:8px; outline:none; transition:border-color .2s;
+    }
+    .form-control:focus { border-color:var(--nt-blue-light); background:rgba(26,86,219,.06); }
+    textarea.form-control { resize:vertical; min-height:80px; }
+    .form-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; padding-top:18px; border-top:1px solid var(--nt-border); }
+    .btn-cancel { background:none; border:1px solid var(--nt-border); color:var(--nt-muted); border-radius:8px; padding:9px 20px; cursor:pointer; font-size:.8rem; font-family:var(--font-main); transition:all .2s; }
+    .btn-cancel:hover { border-color:var(--nt-red); color:var(--nt-red); }
+    .btn-save { background:var(--nt-blue); border:none; color:#fff; border-radius:8px; padding:9px 24px; cursor:pointer; font-size:.8rem; font-weight:600; font-family:var(--font-main); transition:all .2s; display:flex; align-items:center; gap:6px; }
+    .btn-save:hover { background:#1e40af; }
+    .btn-save:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* ---- TOAST ---- */
+    #toast {
+      position:fixed; bottom:24px; right:24px; z-index:9998;
+      background:var(--nt-navy-mid); border:1px solid var(--nt-border);
+      border-radius:10px; padding:12px 18px; font-size:.82rem;
+      display:flex; align-items:center; gap:10px;
+      transform:translateY(80px); opacity:0;
+      transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s;
+      max-width:360px; box-shadow:0 8px 32px rgba(0,0,0,.4);
+    }
+    #toast.show { transform:none; opacity:1; }
+    #toast.success .toast-icon { color:var(--nt-green); }
+    #toast.error   .toast-icon { color:var(--nt-red);   }
+    #toast.info    .toast-icon { color:var(--nt-blue-light); }
+
+    /* ---- CARDS RESPONSÁVEL ---- */
+    .resp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+    .resp-card {
+      background:var(--nt-navy-card); border:1px solid var(--nt-border);
+      border-radius:var(--nt-radius-lg); padding:18px 20px; position:relative; overflow:hidden;
+      transition:transform .2s, box-shadow .2s;
+    }
+    .resp-card:hover { transform:translateY(-2px); box-shadow:0 8px 32px var(--nt-glow); }
+    .resp-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--rc,var(--nt-blue)),transparent); }
+    .rc-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+    .rc-avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; color:#fff; flex-shrink:0; }
+    .rc-name  { font-size:.9rem; font-weight:700; }
+    .rc-tasks { font-size:.7rem; color:var(--nt-muted); margin-top:1px; }
+    .rc-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:10px; }
+    .rc-stat  { background:rgba(255,255,255,.04); border-radius:7px; padding:7px 5px; text-align:center; }
+    .rc-stat-val { font-size:.95rem; font-weight:700; font-family:var(--font-mono); }
+    .rc-stat-lbl { font-size:.58rem; color:var(--nt-muted); text-transform:uppercase; letter-spacing:.06em; margin-top:1px; }
+    .rc-bar-wrap { height:4px; background:rgba(255,255,255,.08); border-radius:99px; margin-top:12px; overflow:hidden; }
+    .rc-bar-fill { height:100%; border-radius:99px; transition:width .8s cubic-bezier(.34,1.56,.64,1); }
+
+    /* ---- CATEGORIAS VIEW ---- */
+    .cat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+    .cat-card {
+      background:var(--nt-navy-card); border:1px solid var(--nt-border);
+      border-radius:var(--nt-radius-lg); padding:20px; overflow:hidden; position:relative;
+      transition:transform .2s, box-shadow .2s;
+    }
+    .cat-card:hover { transform:translateY(-2px); box-shadow:0 8px 32px var(--nt-glow); }
+    .cat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--cc,var(--nt-blue)),transparent); }
+    .cat-header  { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .cat-icon    { font-size:1.4rem; }
+    .cat-name    { font-size:1rem; font-weight:700; }
+    .cat-total   { font-size:.7rem; color:var(--nt-muted); margin-top:1px; }
+    .cat-numbers { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+    .cn { background:rgba(255,255,255,.04); border-radius:7px; padding:8px 5px; text-align:center; }
+    .cn-val { font-size:1.1rem; font-weight:800; font-family:var(--font-mono); }
+    .cn-lbl { font-size:.58rem; color:var(--nt-muted); text-transform:uppercase; letter-spacing:.05em; margin-top:1px; }
+    .cat-progress-bar { margin-top:12px; }
+    .cp-label { display:flex; justify-content:space-between; font-size:.7rem; color:var(--nt-muted); margin-bottom:4px; }
+    .cp-bar-wrap { height:5px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden; }
+    .cp-bar-fill { height:100%; border-radius:99px; transition:width .8s cubic-bezier(.34,1.56,.64,1); }
+
+    /* ---- EMPTY STATE ---- */
+    .empty-state { text-align:center; padding:60px 20px; color:var(--nt-muted); }
+    .empty-icon  { font-size:3rem; margin-bottom:12px; opacity:.4; }
+    .empty-msg   { font-size:.85rem; }
+
+    /* ---- SCROLLBAR ---- */
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(59,130,246,.25); border-radius:99px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(59,130,246,.45); }
+
+    /* ---- SKELETON ---- */
+    .skeleton { background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:6px; }
+    @keyframes shimmer { 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
+
+    @media (max-width:768px) {
+      .sidebar { display:none; }
+      .form-grid { grid-template-columns:1fr; }
+      .form-group.span2 { grid-column:span 1; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div id="loading-screen">
+  <img src="https://compliance.nortesistech.com/static/compliance/img/logo%20norte%20full.png"
+       class="loader-logo-img" alt="Norte Tech" onerror="this.style.display='none';document.getElementById('loader-fallback').style.display='block'"/>
+  <div id="loader-fallback" style="display:none;font-size:1.6rem;font-weight:800;letter-spacing:-.02em;margin-bottom:8px">
+    Norte<span style="color:var(--nt-orange)">Tech</span>
+  </div>
+  <div class="loader-sub">Carregando sistema de gestão de tarefas…</div>
+  <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  <div class="loader-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-brand">
+    <img src="https://compliance.nortesistech.com/static/compliance/img/logo%20norte%20full.png"
+         alt="Norte Tech" onerror="this.outerHTML='<span style=\'font-size:.95rem;font-weight:800;color:var(--nt-white)\'>Norte<span style=\'color:var(--nt-orange)\'>Tech</span></span>'"/>
+    <div class="brand-divider"></div>
+    <div>
+      <div class="brand-text">Gestão de <span>Tarefas</span></div>
+      <div class="brand-sub">Logística · Norte Tech</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-date" id="header-date">--/--/---- --:--</div>
+    <button class="header-btn" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema" aria-pressed="false" style="min-width:130px;justify-content:center;">
+      <span id="theme-icon">☾</span>
+      <span id="theme-label">Modo escuro</span>
+    </button>
+    <button class="header-btn" onclick="loadData()" id="btn-refresh">⟳ Atualizar</button>
+    <button class="header-btn primary" onclick="openModal('nova')">+ Nova Tarefa</button>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section-title">Visões</div>
+    <div class="sidebar-item active" onclick="switchView('tarefas',this)" id="nav-tarefas">
+      <span class="sidebar-icon">📋</span> Todas as Tarefas
+      <span class="sidebar-badge blue" id="badge-total">0</span>
+    </div>
+    <div class="sidebar-item" onclick="switchView('alertas',this)" id="nav-alertas">
+      <span class="sidebar-icon">🔔</span> Alertas
+      <span class="sidebar-badge" id="badge-alertas">0</span>
+    </div>
+    <div class="sidebar-item" onclick="switchView('responsaveis',this)">
+      <span class="sidebar-icon">👥</span> Por Responsável
+    </div>
+    <div class="sidebar-item" onclick="switchView('categorias',this)">
+      <span class="sidebar-icon">🗂️</span> Por Categoria
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title">Filtros Rápidos</div>
+    <div class="sidebar-item" onclick="filtroRapido('Alta')">
+      <span class="sidebar-icon">🔴</span> Prioridade Alta
+      <span class="sidebar-badge orange" id="badge-alta">0</span>
+    </div>
+    <div class="sidebar-item" onclick="filtroRapido('Em Andamento')">
+      <span class="sidebar-icon">⚡</span> Em Andamento
+      <span class="sidebar-badge blue" id="badge-andamento">0</span>
+    </div>
+    <div class="sidebar-item" onclick="filtroRapido('vencidas')">
+      <span class="sidebar-icon">⚠️</span> Vencidas
+      <span class="sidebar-badge" id="badge-vencidas">0</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-title">Sistema</div>
+    <div class="sidebar-item" onclick="enviarAlertas()">
+      <span class="sidebar-icon">📧</span> Enviar Alertas
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- VIEW: TODAS AS TAREFAS -->
+    <div class="view active" id="view-tarefas">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">Tarefas <span>Delegadas</span></div>
+          <div class="page-sub">Monitoramento em tempo real — atualizado em <span id="data-atualizacao">…</span></div>
+        </div>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="summary-grid" id="summary-grid">
+        <div class="sc acc-blue">
+          <div class="sc-label">Total</div>
+          <div class="sc-value" id="sc-total">—</div>
+          <div class="sc-meta">tarefas cadastradas</div>
+          <div class="sc-icon">📋</div>
+        </div>
+        <div class="sc acc-yellow">
+          <div class="sc-label">Pendentes</div>
+          <div class="sc-value" id="sc-pendentes">—</div>
+          <div class="sc-meta">aguardando início</div>
+          <div class="sc-icon">⏳</div>
+        </div>
+        <div class="sc acc-orange">
+          <div class="sc-label">Em Andamento</div>
+          <div class="sc-value" id="sc-andamento">—</div>
+          <div class="sc-meta">em execução</div>
+          <div class="sc-icon">⚡</div>
+        </div>
+        <div class="sc acc-green">
+          <div class="sc-label">Concluídas</div>
+          <div class="sc-value" id="sc-concluidas">—</div>
+          <div class="sc-meta">finalizadas</div>
+          <div class="sc-icon">✅</div>
+        </div>
+        <div class="sc acc-red">
+          <div class="sc-label">Vencidas</div>
+          <div class="sc-value" id="sc-vencidas">—</div>
+          <div class="sc-meta">prazo ultrapassado</div>
+          <div class="sc-icon">🚨</div>
+        </div>
+        <div class="sc acc-red">
+          <div class="sc-label">Alta Prioridade</div>
+          <div class="sc-value" id="sc-alta">—</div>
+          <div class="sc-meta">atenção imediata</div>
+          <div class="sc-icon">🔴</div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filter-bar">
+        <span class="filter-label">Filtrar:</span>
+        <input type="text" class="filter-input" id="f-busca" placeholder="🔍 Buscar por título ou responsável…" oninput="renderTabela()"/>
+        <select class="filter-select" id="f-responsavel" onchange="renderTabela()"><option value="">Todos responsáveis</option></select>
+        <select class="filter-select" id="f-categoria"   onchange="renderTabela()"><option value="">Todas categorias</option></select>
+        <select class="filter-select" id="f-prioridade"  onchange="renderTabela()"><option value="">Todas prioridades</option></select>
+        <select class="filter-select" id="f-status"      onchange="renderTabela()"><option value="">Todos status</option></select>
+        <button class="filter-clear" onclick="limparFiltros()">✕ Limpar</button>
+      </div>
+
+      <!-- Tabela -->
+      <div class="table-wrap">
+        <div class="table-header-bar">
+          <span class="table-title">Lista de Tarefas</span>
+          <span class="table-count" id="table-count">0 tarefas</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortBy('id')">#<span class="sort-icon" id="sort-id"></span></th>
+              <th onclick="sortBy('titulo')">Título<span class="sort-icon" id="sort-titulo"></span></th>
+              <th onclick="sortBy('responsavel')">Responsável<span class="sort-icon" id="sort-responsavel"></span></th>
+              <th onclick="sortBy('categoria')">Categoria<span class="sort-icon" id="sort-categoria"></span></th>
+              <th onclick="sortBy('prioridade')">Prioridade<span class="sort-icon" id="sort-prioridade"></span></th>
+              <th onclick="sortBy('status')">Status<span class="sort-icon" id="sort-status"></span></th>
+              <th onclick="sortBy('dataPrevista')">Prazo<span class="sort-icon" id="sort-dataPrevista"></span></th>
+              <th>Dias</th>
+              <th>Alertas</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-tarefas">
+            <tr><td colspan="10" class="empty-row">Carregando dados…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW: ALERTAS -->
+    <div class="view" id="view-alertas">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">⚠️ <span>Alertas</span> de Vencimento</div>
+          <div class="page-sub">Tarefas vencidas ou próximas do prazo</div>
+        </div>
+        <button class="header-btn primary" onclick="enviarAlertas()">📧 Enviar Alertas por E-mail</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header-bar">
+          <span class="table-title">Tarefas que requerem atenção</span>
+          <span class="table-count" id="alert-count">0 tarefas</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Título</th><th>Responsável</th><th>Categoria</th>
+              <th>Prioridade</th><th>Status</th><th>Prazo</th>
+              <th>Situação</th><th>Alertas Enviados</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-alertas">
+            <tr><td colspan="9" class="empty-row">Carregando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW: RESPONSÁVEIS -->
+    <div class="view" id="view-responsaveis">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">👥 Por <span>Responsável</span></div>
+          <div class="page-sub">Distribuição de tarefas por colaborador</div>
+        </div>
+      </div>
+      <div class="resp-grid" id="resp-grid">
+        <div class="empty-state"><div class="empty-icon">👥</div><div class="empty-msg">Carregando responsáveis…</div></div>
+      </div>
+    </div>
+
+    <!-- VIEW: CATEGORIAS -->
+    <div class="view" id="view-categorias">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">🗂️ Por <span>Categoria</span></div>
+          <div class="page-sub">Oficina · Frota · Compras · Armazém · Dashboards · Administrativo</div>
+        </div>
+      </div>
+      <div class="cat-grid" id="cat-grid">
+        <div class="empty-state"><div class="empty-icon">🗂️</div><div class="empty-msg">Carregando categorias…</div></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL NOVA/EDITAR TAREFA -->
+<div class="modal-overlay" id="modal-tarefa" onclick="fecharModalClick(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="fecharModal()">✕</button>
+    <div class="modal-title" id="modal-titulo">Nova Tarefa</div>
+    <div class="modal-sub">Preencha os dados para registrar a tarefa delegada</div>
+    <input type="hidden" id="form-linha"/>
+
+    <div class="form-grid">
+      <div class="form-group span2">
+        <label class="form-label">Título *</label>
+        <input type="text" class="form-control" id="form-titulo" placeholder="Descreva brevemente a tarefa…" maxlength="120"/>
+      </div>
+      <div class="form-group span2">
+        <label class="form-label">Descrição</label>
+        <textarea class="form-control" id="form-descricao" placeholder="Detalhes, contexto, critérios de aceite…" rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Responsável *</label>
+        <select class="form-control" id="form-responsavel"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria *</label>
+        <select class="form-control" id="form-categoria"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prioridade *</label>
+        <select class="form-control" id="form-prioridade">
+          <option value="Alta">🔴 Alta</option>
+          <option value="Média" selected>🟡 Média</option>
+          <option value="Baixa">🟢 Baixa</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-control" id="form-status">
+          <option value="Pendente">⏳ Pendente</option>
+          <option value="Em Andamento">⚡ Em Andamento</option>
+          <option value="Concluída">✅ Concluída</option>
+          <option value="Cancelada">❌ Cancelada</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data Prevista de Conclusão *</label>
+        <input type="date" class="form-control" id="form-dataPrevista"/>
+      </div>
+      <div class="form-group span2">
+        <label class="form-label">Observações</label>
+        <textarea class="form-control" id="form-obs" placeholder="Notas adicionais, dependências, riscos…" rows="2"></textarea>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-save" id="btn-salvar" onclick="salvarTarefa()">
+        <span id="save-spinner" style="display:none">⟳</span>
+        💾 Salvar Tarefa
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <span class="toast-icon" id="toast-icon">✓</span>
+  <span id="toast-msg">—</span>
+</div>
+
+<!-- ============================================================
+     APPS SCRIPT BRIDGE + ENGINE
+============================================================ -->
+<script>
+// -----------------------------------------------------------
+//  ESTADO GLOBAL
+// -----------------------------------------------------------
+var G = {
+  tarefas:        [],
+  responsaveis:   [],
+  porCategoria:   {},
+  porResponsavel: {},
+  categorias:     [],
+  prioridades:    [],
+  statusList:     [],
+  sortField:      'id',
+  sortAsc:        true,
+  filtroRapidoAtivo: null
+};
+
+// -----------------------------------------------------------
+//  BOOT
+// -----------------------------------------------------------
+window.addEventListener('load', function() {
+  atualizarRelogio();
+  setInterval(atualizarRelogio, 30000);
+  loadData();
+});
+
+function atualizarRelogio() {
+  var agora = new Date();
+  var pad   = function(n){ return String(n).padStart(2,'0'); };
+  document.getElementById('header-date').textContent =
+    pad(agora.getDate()) + '/' + pad(agora.getMonth()+1) + '/' + agora.getFullYear() +
+    ' ' + pad(agora.getHours()) + ':' + pad(agora.getMinutes());
+}
+
+// -----------------------------------------------------------
+//  LOAD DATA — integração com Apps Script
+// -----------------------------------------------------------
+function loadData() {
+  showLoading(true);
+  document.getElementById('btn-refresh').textContent = '⟳ Atualizando…';
+
+  google.script.run
+    .withSuccessHandler(function(resp) {
+      var data = typeof resp === 'string' ? JSON.parse(resp) : resp;
+      if (data.erro) { onError(data.erro); return; }
+      onDataReceived(data);
+    })
+    .withFailureHandler(function(err) {
+      onError(err.message || String(err));
+    })
+    .getTarefasData();
+}
+
+function onError(msg) {
+  showLoading(false);
+  document.getElementById('btn-refresh').textContent = '⟳ Atualizar';
+  toast('Erro ao carregar dados: ' + msg, 'error');
+}
+
+function showLoading(show) {
+  var el = document.getElementById('loading-screen');
+  if (show) {
+    el.style.display = 'flex';
+    el.classList.remove('fade-out');
+  } else {
+    el.classList.add('fade-out');
+    setTimeout(function(){ el.style.display = 'none'; }, 700);
+  }
+}
+
+function onDataReceived(data) {
+  G.tarefas        = data.tarefas        || [];
+  G.responsaveis   = data.responsaveis   || [];
+  G.porCategoria   = data.porCategoria   || {};
+  G.porResponsavel = data.porResponsavel || {};
+  G.categorias     = data.categorias     || [];
+  G.prioridades    = data.prioridades    || [];
+  G.statusList     = data.statusList     || [];
+
+  // Atualiza resumo
+  document.getElementById('sc-total').textContent     = data.totalTarefas    || 0;
+  document.getElementById('sc-pendentes').textContent = data.totalPendentes  || 0;
+  document.getElementById('sc-andamento').textContent = data.totalAndamento  || 0;
+  document.getElementById('sc-concluidas').textContent= data.totalConcluidas || 0;
+  document.getElementById('sc-vencidas').textContent  = data.totalVencidas   || 0;
+  document.getElementById('sc-alta').textContent      = data.totalAlta       || 0;
+  document.getElementById('data-atualizacao').textContent = data.dataAtualizacao || '—';
+
+  // Badges sidebar
+  document.getElementById('badge-total').textContent    = data.totalTarefas   || 0;
+  document.getElementById('badge-alertas').textContent  = (data.totalVencidas || 0) + (data.totalAlta || 0);
+  document.getElementById('badge-alta').textContent     = data.totalAlta      || 0;
+  document.getElementById('badge-andamento').textContent= data.totalAndamento || 0;
+  document.getElementById('badge-vencidas').textContent = data.totalVencidas  || 0;
+
+  popularFiltros();
+  renderTabela();
+  renderAlertas();
+  renderResponsaveis();
+  renderCategorias();
+  popularModalSelects();
+
+  showLoading(false);
+  document.getElementById('btn-refresh').textContent = '⟳ Atualizar';
+}
+
+// -----------------------------------------------------------
+//  POPULAR FILTROS
+// -----------------------------------------------------------
+function popularFiltros() {
+  var sels = [
+    { id: 'f-responsavel', items: [...new Set(G.tarefas.map(function(t){ return t.responsavel; }).filter(Boolean))], prefixo: 'Todos responsáveis' },
+    { id: 'f-categoria',   items: G.categorias, prefixo: 'Todas categorias'  },
+    { id: 'f-prioridade',  items: G.prioridades,prefixo: 'Todas prioridades' },
+    { id: 'f-status',      items: G.statusList, prefixo: 'Todos status'      }
+  ];
+  sels.forEach(function(s) {
+    var el = document.getElementById(s.id);
+    var curr = el.value;
+    el.innerHTML = '<option value="">' + s.prefixo + '</option>';
+    s.items.forEach(function(item) {
+      el.innerHTML += '<option value="' + item + '"' + (curr === item ? ' selected' : '') + '>' + item + '</option>';
+    });
+  });
+}
+
+function popularModalSelects() {
+  var selResp = document.getElementById('form-responsavel');
+  var curr    = selResp.value;
+  selResp.innerHTML = '<option value="">Selecione…</option>';
+  G.responsaveis.forEach(function(r) {
+    selResp.innerHTML += '<option value="' + r.nome + '"' + (curr === r.nome ? ' selected' : '') + '>' + r.nome + '</option>';
+  });
+  // se não há responsáveis cadastrados, usa os que aparecem nas tarefas
+  if (!G.responsaveis.length) {
+    var nomes = [...new Set(G.tarefas.map(function(t){ return t.responsavel; }).filter(Boolean))];
+    nomes.forEach(function(n) {
+      selResp.innerHTML += '<option value="' + n + '">' + n + '</option>';
+    });
+  }
+
+  var selCat = document.getElementById('form-categoria');
+  var currC  = selCat.value;
+  selCat.innerHTML = '<option value="">Selecione…</option>';
+  G.categorias.forEach(function(c) {
+    selCat.innerHTML += '<option value="' + c + '"' + (currC === c ? ' selected' : '') + '>' + c + '</option>';
+  });
+}
+
+// -----------------------------------------------------------
+//  FILTRO RÁPIDO (sidebar)
+// -----------------------------------------------------------
+function filtroRapido(valor) {
+  G.filtroRapidoAtivo = valor;
+  switchView('tarefas', document.getElementById('nav-tarefas'));
+  if (valor === 'vencidas') {
+    // sem filtro de select, filtra no render
+  } else if (['Alta','Média','Baixa'].includes(valor)) {
+    document.getElementById('f-prioridade').value = valor;
+  } else {
+    document.getElementById('f-status').value = valor;
+  }
+  renderTabela();
+  G.filtroRapidoAtivo = null;
+}
+
+function limparFiltros() {
+  document.getElementById('f-busca').value       = '';
+  document.getElementById('f-responsavel').value = '';
+  document.getElementById('f-categoria').value   = '';
+  document.getElementById('f-prioridade').value  = '';
+  document.getElementById('f-status').value      = '';
+  renderTabela();
+}
+
+// -----------------------------------------------------------
+//  RENDER TABELA
+// -----------------------------------------------------------
+function sortBy(campo) {
+  if (G.sortField === campo) {
+    G.sortAsc = !G.sortAsc;
+  } else {
+    G.sortField = campo;
+    G.sortAsc   = true;
+  }
+  document.querySelectorAll('.sort-icon').forEach(function(el){ el.textContent = ''; });
+  var ico = document.getElementById('sort-' + campo);
+  if (ico) ico.textContent = G.sortAsc ? ' ↑' : ' ↓';
+  renderTabela();
+}
+
+function renderTabela() {
+  var busca   = (document.getElementById('f-busca').value   || '').toLowerCase();
+  var resp    = document.getElementById('f-responsavel').value || '';
+  var cat     = document.getElementById('f-categoria').value   || '';
+  var prio    = document.getElementById('f-prioridade').value  || '';
+  var sts     = document.getElementById('f-status').value      || '';
+
+  var lista = G.tarefas.filter(function(t) {
+    if (busca && !t.titulo.toLowerCase().includes(busca) && !(t.responsavel||'').toLowerCase().includes(busca)) return false;
+    if (resp && t.responsavel !== resp)   return false;
+    if (cat  && t.categoria   !== cat)    return false;
+    if (prio && t.prioridade  !== prio)   return false;
+    if (sts  && t.status      !== sts)    return false;
+    if (G.filtroRapidoAtivo === 'vencidas' && !t.vencida) return false;
+    return true;
+  });
+
+  // Ordenar
+  lista.sort(function(a, b) {
+    var va = a[G.sortField]; var vb = b[G.sortField];
+    if (va === null || va === undefined) va = '';
+    if (vb === null || vb === undefined) vb = '';
+    if (typeof va === 'number') return G.sortAsc ? va - vb : vb - va;
+    return G.sortAsc ? String(va).localeCompare(String(vb),'pt') : String(vb).localeCompare(String(va),'pt');
+  });
+
+  document.getElementById('table-count').textContent = lista.length + ' tarefa' + (lista.length !== 1 ? 's' : '');
+
+  var tbody = document.getElementById('tbody-tarefas');
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-row"><div class="empty-icon">🔍</div>Nenhuma tarefa encontrada com esses filtros.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(function(t) { return rowHTML(t); }).join('');
+}
+
+function rowHTML(t) {
+  var classTr = t.vencida ? 'vencida' : '';
+  return '<tr class="' + classTr + '">' +
+    '<td class="mono" style="color:var(--nt-muted)">#' + t.id + '</td>' +
+    '<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(t.descricao||'') + '"><strong>' + esc(t.titulo) + '</strong></td>' +
+    '<td>' + esc(t.responsavel||'—') + '</td>' +
+    '<td>' + catBadge(t.categoria) + '</td>' +
+    '<td>' + prioBadge(t.prioridade) + '</td>' +
+    '<td>' + statusBadge(t.status) + '</td>' +
+    '<td class="mono">' + (t.dataPrevista||'—') + '</td>' +
+    '<td>' + diasChip(t.diasRestantes, t.vencida, t.status) + '</td>' +
+    '<td class="mono" style="color:' + (t.numAlertas > 0 ? 'var(--nt-orange)' : 'var(--nt-muted)') + '">' + (t.numAlertas||0) + '</td>' +
+    '<td><div class="action-btns">' +
+      '<button class="btn-icon" title="Editar" onclick="editarTarefa(' + JSON.stringify(t).replace(/"/g,'&quot;') + ')">✏️</button>' +
+      '<button class="btn-icon success" title="Marcar concluída" onclick="marcarConcluida(' + t.linha + ')">✅</button>' +
+      '<button class="btn-icon danger"  title="Excluir"          onclick="excluirTarefa(' + t.linha + ',\'' + esc(t.titulo) + '\')">🗑️</button>' +
+    '</div></td></tr>';
+}
+
+// -----------------------------------------------------------
+//  RENDER ALERTAS
+// -----------------------------------------------------------
+function renderAlertas() {
+  var hoje  = new Date(); hoje.setHours(0,0,0,0);
+  var lista = G.tarefas.filter(function(t) {
+    if (t.status === 'Concluída' || t.status === 'Cancelada') return false;
+    if (t.vencida) return true;
+    if (t.diasRestantes !== null && t.diasRestantes <= 3) return true;
+    return false;
+  });
+
+  lista.sort(function(a,b){ return (a.diasRestantes||0) - (b.diasRestantes||0); });
+
+  document.getElementById('alert-count').textContent = lista.length + ' tarefa' + (lista.length !== 1 ? 's' : '');
+
+  var tbody = document.getElementById('tbody-alertas');
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-row"><span style="font-size:1.5rem">✅</span><br>Nenhuma tarefa em alerta no momento!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(function(t) {
+    var sitLabel, sitCor;
+    if (t.diasRestantes < 0) { sitLabel = 'VENCIDA (' + Math.abs(t.diasRestantes) + 'd)'; sitCor = 'var(--nt-red)'; }
+    else if (t.diasRestantes === 0) { sitLabel = '🔥 VENCE HOJE'; sitCor = 'var(--nt-yellow)'; }
+    else { sitLabel = 'Vence em ' + t.diasRestantes + 'd'; sitCor = 'var(--nt-blue-light)'; }
+    return '<tr class="' + (t.vencida ? 'vencida' : '') + '">' +
+      '<td><strong>' + esc(t.titulo) + '</strong></td>' +
+      '<td>' + esc(t.responsavel||'—') + '</td>' +
+      '<td>' + catBadge(t.categoria) + '</td>' +
+      '<td>' + prioBadge(t.prioridade) + '</td>' +
+      '<td>' + statusBadge(t.status) + '</td>' +
+      '<td class="mono">' + (t.dataPrevista||'—') + '</td>' +
+      '<td style="font-size:.75rem;font-weight:700;color:' + sitCor + '">' + sitLabel + '</td>' +
+      '<td class="mono" style="color:var(--nt-orange)">' + (t.numAlertas||0) + '</td>' +
+      '<td><div class="action-btns">' +
+        '<button class="btn-icon" onclick="editarTarefa(' + JSON.stringify(t).replace(/"/g,'&quot;') + ')">✏️</button>' +
+        '<button class="btn-icon success" onclick="marcarConcluida(' + t.linha + ')">✅</button>' +
+      '</div></td></tr>';
+  }).join('');
+}
+
+// -----------------------------------------------------------
+//  RENDER RESPONSÁVEIS
+// -----------------------------------------------------------
+var AVATAR_COLORS = ['#1a56db','#14b8a6','#a855f7','#E4C62A','#ef4444','#22c55e','#ea580c','#3b82f6'];
+function avatarColor(nome) { var h = 0; for(var i=0;i<nome.length;i++) h+=nome.charCodeAt(i); return AVATAR_COLORS[h % AVATAR_COLORS.length]; }
+function initials(nome)    { return nome.split(' ').slice(0,2).map(function(w){ return w[0]; }).join('').toUpperCase(); }
+
+function renderResponsaveis() {
+  var grid = document.getElementById('resp-grid');
+  var respNomes = Object.keys(G.porResponsavel);
+  if (!respNomes.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-msg">Nenhum responsável encontrado.</div></div>';
+    return;
+  }
+
+  respNomes.sort(function(a,b){ return (G.porResponsavel[b].total||0) - (G.porResponsavel[a].total||0); });
+
+  grid.innerHTML = respNomes.map(function(nome) {
+    var r = G.porResponsavel[nome];
+    var cor = avatarColor(nome);
+    var pct = r.total > 0 ? Math.round((r.concluidas / r.total) * 100) : 0;
+    var barCor = pct >= 80 ? 'var(--nt-green)' : pct >= 50 ? 'var(--nt-yellow)' : 'var(--nt-red)';
+    return '<div class="resp-card" style="--rc:' + cor + '">' +
+      '<div class="rc-header">' +
+        '<div class="rc-avatar" style="background:' + cor + '">' + initials(nome) + '</div>' +
+        '<div><div class="rc-name">' + esc(nome) + '</div>' +
+        '<div class="rc-tasks">' + r.total + ' tarefa' + (r.total!==1?'s':'') + (r.alta ? ' · ' + r.alta + ' alta' : '') + '</div></div>' +
+        (r.vencidas ? '<span class="badge b-vencida" style="margin-left:auto"><span class="badge-dot"></span>' + r.vencidas + ' vencida' + (r.vencidas>1?'s':'') + '</span>' : '') +
+      '</div>' +
+      '<div class="rc-stats">' +
+        '<div class="rc-stat"><div class="rc-stat-val">' + r.pendentes + '</div><div class="rc-stat-lbl">Pendente</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-val" style="color:var(--nt-orange)">' + r.andamento + '</div><div class="rc-stat-lbl">Andamento</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-val" style="color:var(--nt-green)">' + r.concluidas + '</div><div class="rc-stat-lbl">Concluída</div></div>' +
+        '<div class="rc-stat"><div class="rc-stat-val" style="color:var(--nt-red)">' + r.vencidas + '</div><div class="rc-stat-lbl">Vencida</div></div>' +
+      '</div>' +
+      '<div class="rc-bar-wrap"><div class="rc-bar-fill" style="width:' + pct + '%;background:' + barCor + '"></div></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:.66rem;color:var(--nt-muted);margin-top:4px"><span>Progresso geral</span><span style="color:' + barCor + ';font-weight:700">' + pct + '%</span></div>' +
+    '</div>';
+  }).join('');
+}
+
+// -----------------------------------------------------------
+//  RENDER CATEGORIAS
+// -----------------------------------------------------------
+var CAT_META = {
+  'Oficina':        { icon:'🔧', cor:'#a855f7', cls:'cat-oficina'       },
+  'Frota':          { icon:'🚛', cor:'var(--nt-teal)',   cls:'cat-frota'          },
+  'Compras':        { icon:'🛒', cor:'var(--nt-orange)', cls:'cat-compras'        },
+  'Armazém':        { icon:'📦', cor:'var(--nt-blue-light)', cls:'cat-armazem'    },
+  'Dashboards':     { icon:'📊', cor:'var(--nt-green)',  cls:'cat-dashboards'     },
+  'Administrativo': { icon:'📁', cor:'var(--nt-red)',    cls:'cat-administrativo' },
+  'Instalação': { icon:'🛠️', cor:'#a855f7',    cls:'cat-instalacao' },
+  'Logística': { icon:'📦', cor:'#a855f7',    cls:'cat-logistica' }
+};
+
+function renderCategorias() {
+  var grid = document.getElementById('cat-grid');
+  var cats = G.categorias.length ? G.categorias : Object.keys(G.porCategoria);
+  grid.innerHTML = cats.map(function(cat) {
+    var r   = G.porCategoria[cat] || { total:0, pendentes:0, andamento:0, concluidas:0, vencidas:0 };
+    var m   = CAT_META[cat] || { icon:'📌', cor:'var(--nt-blue)', cls:'' };
+    var pct = r.total > 0 ? Math.round((r.concluidas / r.total) * 100) : 0;
+    var barCor = pct >= 80 ? 'var(--nt-green)' : pct >= 40 ? 'var(--nt-yellow)' : 'var(--nt-muted)';
+    return '<div class="cat-card" style="--cc:' + m.cor + '">' +
+      '<div class="cat-header">' +
+        '<div class="cat-icon">' + m.icon + '</div>' +
+        '<div><div class="cat-name">' + cat + '</div><div class="cat-total">' + r.total + ' tarefa' + (r.total!==1?'s':'') + '</div></div>' +
+        (r.vencidas ? '<span class="badge b-vencida" style="margin-left:auto"><span class="badge-dot"></span>' + r.vencidas + '</span>' : '') +
+      '</div>' +
+      '<div class="cat-numbers">' +
+        '<div class="cn"><div class="cn-val">' + r.pendentes + '</div><div class="cn-lbl">Pend.</div></div>' +
+        '<div class="cn"><div class="cn-val" style="color:var(--nt-orange)">' + r.andamento + '</div><div class="cn-lbl">Andamento</div></div>' +
+        '<div class="cn"><div class="cn-val" style="color:var(--nt-green)">' + r.concluidas + '</div><div class="cn-lbl">Concl.</div></div>' +
+        '<div class="cn"><div class="cn-val" style="color:var(--nt-red)">' + r.vencidas + '</div><div class="cn-lbl">Vencida</div></div>' +
+      '</div>' +
+      '<div class="cat-progress-bar">' +
+        '<div class="cp-label"><span>Conclusão</span><span style="color:' + barCor + ';font-weight:700">' + pct + '%</span></div>' +
+        '<div class="cp-bar-wrap"><div class="cp-bar-fill" style="width:' + pct + '%;background:' + barCor + '"></div></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// -----------------------------------------------------------
+//  MODAL — NOVA TAREFA
+// -----------------------------------------------------------
+function openModal(tipo) {
+  document.getElementById('modal-titulo').textContent = tipo === 'nova' ? 'Nova Tarefa' : 'Editar Tarefa';
+  document.getElementById('form-linha').value       = '';
+  document.getElementById('form-titulo').value      = '';
+  document.getElementById('form-descricao').value   = '';
+  document.getElementById('form-responsavel').value = '';
+  document.getElementById('form-categoria').value   = '';
+  document.getElementById('form-prioridade').value  = 'Média';
+  document.getElementById('form-status').value      = 'Pendente';
+  document.getElementById('form-obs').value         = '';
+  // Data default: hoje + 7 dias
+  var d = new Date(); d.setDate(d.getDate()+7);
+  document.getElementById('form-dataPrevista').value = d.toISOString().slice(0,10);
+  document.getElementById('modal-tarefa').classList.add('open');
+}
+
+function editarTarefa(t) {
+  popularModalSelects();
+  document.getElementById('modal-titulo').textContent    = 'Editar Tarefa #' + t.id;
+  document.getElementById('form-linha').value            = t.linha;
+  document.getElementById('form-titulo').value           = t.titulo || '';
+  document.getElementById('form-descricao').value        = t.descricao || '';
+  document.getElementById('form-responsavel').value      = t.responsavel || '';
+  document.getElementById('form-categoria').value        = t.categoria || '';
+  document.getElementById('form-prioridade').value       = t.prioridade || 'Média';
+  document.getElementById('form-status').value           = t.status || 'Pendente';
+  document.getElementById('form-obs').value              = t.observacoes || '';
+  // Converte dd/MM/yyyy → yyyy-MM-dd
+  if (t.dataPrevista) {
+    var partes = t.dataPrevista.split('/');
+    if (partes.length === 3) document.getElementById('form-dataPrevista').value = partes[2] + '-' + partes[1] + '-' + partes[0];
+  }
+  document.getElementById('modal-tarefa').classList.add('open');
+}
+
+function fecharModal() { document.getElementById('modal-tarefa').classList.remove('open'); }
+function fecharModalClick(e) { if (e.target === document.getElementById('modal-tarefa')) fecharModal(); }
+
+function salvarTarefa() {
+  var titulo = document.getElementById('form-titulo').value.trim();
+  if (!titulo) { toast('O título da tarefa é obrigatório.', 'error'); return; }
+
+  var dados = {
+    linha:         parseInt(document.getElementById('form-linha').value) || null,
+    titulo:        titulo,
+    descricao:     document.getElementById('form-descricao').value.trim(),
+    responsavel:   document.getElementById('form-responsavel').value,
+    categoria:     document.getElementById('form-categoria').value,
+    prioridade:    document.getElementById('form-prioridade').value,
+    status:        document.getElementById('form-status').value,
+    dataPrevista:  document.getElementById('form-dataPrevista').value,
+    observacoes:   document.getElementById('form-obs').value.trim()
+  };
+
+  var btn = document.getElementById('btn-salvar');
+  btn.disabled = true;
+  document.getElementById('save-spinner').style.display = 'inline';
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.disabled = false;
+      document.getElementById('save-spinner').style.display = 'none';
+      if (res.sucesso) {
+        toast(res.mensagem, 'success');
+        fecharModal();
+        loadData();
+      } else {
+        toast('Erro: ' + res.mensagem, 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false;
+      document.getElementById('save-spinner').style.display = 'none';
+      toast('Falha ao salvar: ' + (err.message||err), 'error');
+    })
+    .salvarTarefa(dados);
+}
+
+function marcarConcluida(linha) {
+  if (!confirm('Marcar esta tarefa como Concluída?')) return;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res && res.sucesso) { toast('Tarefa marcada como concluída!', 'success'); loadData(); }
+      else toast('Erro ao atualizar.', 'error');
+    })
+    .atualizarStatus(linha, 'Concluída');
+}
+
+function excluirTarefa(linha, titulo) {
+  if (!confirm('Excluir a tarefa "' + titulo + '"?\n\nEssa ação não pode ser desfeita.')) return;
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res && res.sucesso) { toast('Tarefa excluída.', 'info'); loadData(); }
+      else toast('Erro ao excluir.', 'error');
+    })
+    .excluirTarefa(linha);
+}
+
+function enviarAlertas() {
+  toast('Enviando alertas por e-mail…', 'info');
+  google.script.run
+    .withSuccessHandler(function() { toast('Alertas enviados!', 'success'); loadData(); })
+    .withFailureHandler(function(e){ toast('Erro: ' + e.message, 'error'); })
+    .enviarAlertasVencimento();
+}
+
+// -----------------------------------------------------------
+//  VIEW SWITCHER
+// -----------------------------------------------------------
+function switchView(nome, el) {
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+  document.querySelectorAll('.sidebar-item').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('view-' + nome).classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+// -----------------------------------------------------------
+//  BADGE HELPERS
+// -----------------------------------------------------------
+function prioBadge(p) {
+  var cls = p === 'Alta' ? 'b-alta' : p === 'Média' ? 'b-media' : 'b-baixa';
+  return '<span class="badge ' + cls + '"><span class="badge-dot"></span>' + (p||'—') + '</span>';
+}
+function statusBadge(s) {
+  var cls = s === 'Pendente' ? 'b-pendente' : s === 'Em Andamento' ? 'b-andamento' : s === 'Concluída' ? 'b-concluida' : 'b-cancelada';
+  return '<span class="badge ' + cls + '"><span class="badge-dot"></span>' + (s||'—') + '</span>';
+}
+function catBadge(c) {
+  var m = CAT_META[c] || {};
+  return '<span class="cat-badge ' + (m.cls||'') + '">' + (m.icon||'') + ' ' + (c||'—') + '</span>';
+}
+function diasChip(dias, vencida, status) {
+  if (status === 'Concluída' || status === 'Cancelada') return '<span class="dias-chip dias-ok">—</span>';
+  if (dias === null || dias === undefined) return '<span class="dias-chip dias-sem">Sem prazo</span>';
+  if (dias < 0)   return '<span class="dias-chip dias-vencido">⚠ ' + Math.abs(dias) + 'd atraso</span>';
+  if (dias === 0) return '<span class="dias-chip dias-hoje">🔥 Hoje</span>';
+  if (dias <= 3)  return '<span class="dias-chip dias-proximo">⚡ ' + dias + 'd</span>';
+  return '<span class="dias-chip dias-ok">✓ ' + dias + 'd</span>';
+}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// -----------------------------------------------------------
+//  TOAST
+// -----------------------------------------------------------
+var _toastTimer;
+function toast(msg, tipo) {
+  var el = document.getElementById('toast');
+  var icons = { success:'✓', error:'✕', info:'ℹ' };
+  el.className = 'show ' + (tipo||'info');
+  document.getElementById('toast-icon').textContent = icons[tipo||'info'] || 'ℹ';
+  document.getElementById('toast-msg').textContent  = msg;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 4000);
+}
+
+// -----------------------------------------------------------
+//  TEMA CLARO / ESCURO
+// -----------------------------------------------------------
+var THEME_KEY = 'nt-tasks-theme';
+function getStoredTheme() { try { return localStorage.getItem(THEME_KEY) || 'dark'; } catch(e) { return 'dark'; } }
+function setStoredTheme(t) { try { localStorage.setItem(THEME_KEY, t); } catch(e) {} }
+function applyTheme(theme) {
+  var isLight = theme === 'light';
+  document.body.classList.toggle('light-theme', isLight);
+  var btn   = document.getElementById('theme-toggle');
+  var icon  = document.getElementById('theme-icon');
+  var label = document.getElementById('theme-label');
+  if (btn)   btn.setAttribute('aria-pressed', String(isLight));
+  if (icon)  icon.textContent  = isLight ? '☀' : '☾';
+  if (label) label.textContent = isLight ? 'Modo claro' : 'Modo escuro';
+}
+function toggleTheme() {
+  var next = document.body.classList.contains('light-theme') ? 'dark' : 'light';
+  setStoredTheme(next);
+  applyTheme(next);
+  toast(next === 'light' ? '☀ Modo claro ativado' : '☾ Modo escuro ativado', 'info');
+}
+applyTheme(getStoredTheme());
+</script>
+</body>
+</html>
